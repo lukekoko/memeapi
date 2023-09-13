@@ -1,5 +1,6 @@
 package com.lukekoko.memeapi.config;
 
+import com.lukekoko.memeapi.reddit.Reddit;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,5 +25,10 @@ public class AppConfig {
     @Bean
     public WebClient webClient(WebClient.Builder webClientBuilder) {
         return webClientBuilder.build();
+    }
+
+    @Bean
+    public Reddit reddit() {
+        return new Reddit(null, clientId, clientSecret, userAgent);
     }
 }

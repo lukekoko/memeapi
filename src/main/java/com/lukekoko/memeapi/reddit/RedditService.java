@@ -21,39 +21,12 @@ public class RedditService {
     private final AppConfig appConfig;
     private final WebClient webClient;
 
-    private static Reddit reddit;
-
-    @PostConstruct
-    private void init() throws JsonProcessingException {
-        String clientId = appConfig.getClientId();
-        String clientSecret = appConfig.getClientSecret();
-        String userAgent = appConfig.getUserAgent();
-        AccessToken accessToken = getAccessToken(clientId, clientSecret, userAgent);
-        reddit = new Reddit(accessToken, clientId, clientSecret, userAgent);
-    }
-
-    public AccessToken getAccessToken(String clientId, String clientSecret, String userAgent)
-            throws JsonProcessingException {
-        final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("grant_type", "client_credentials");
-
-        WebClient client = WebClient.create();
-        String response =
-                client.post()
-                        .uri(appConfig.getUrl())
-                        .headers(headers -> headers.setBasicAuth(clientId, clientSecret))
-                        .header("User-Agent", userAgent)
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .body(BodyInserters.fromValue(formData))
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
-        log.info(response);
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(response, AccessToken.class);
-    }
+    private Reddit reddit;
 
     public String doGetRequest(String url) {
+        if (reddit.getAccessToken() == null) {
+            fetchCredentials();
+        }
         return webClient
                 .get()
                 .uri(url)
@@ -62,5 +35,39 @@ public class RedditService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
+    }
+
+    private void fetchCredentials() {
+        AccessToken accessToken = getAccessToken();
+        reddit.setAccessToken(accessToken);
+    }
+
+    private AccessToken getAccessToken() {
+        try {
+            final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("grant_type", "client_credentials");
+
+            WebClient client = WebClient.create();
+            String response =
+                    client.post()
+                            .uri(appConfig.getUrl())
+                            .headers(
+                                    headers ->
+                                            headers.setBasicAuth(
+                                                    appConfig.getClientId(),
+                                                    appConfig.getClientSecret()))
+                            .header("User-Agent", appConfig.getUserAgent())
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .body(BodyInserters.fromValue(formData))
+                            .retrieve()
+                            .bodyToMono(String.class)
+                            .block();
+            log.debug(response);
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(response, AccessToken.class);
+        } catch (JsonProcessingException ex) {
+            log.error("access token sson processing error: ", ex);
+            return new AccessToken();
+        }
     }
 }
