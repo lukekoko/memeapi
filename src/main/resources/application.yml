@@ -4,3 +4,11 @@ reddit:
   userAgent:
   url: "https://www.reddit.com/api/v1/access_token"
 
+spring:
+  data:
+    redis:
+      database: 0
+      host: localhost
+      port: 6379
+      password:
+      timeout: 60000
