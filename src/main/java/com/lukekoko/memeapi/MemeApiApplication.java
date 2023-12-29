@@ -13,9 +13,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaRepositories
 @EnableCaching
 @EnableScheduling
-public class MemeapiApplication {
+public class MemeApiApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MemeapiApplication.class, args);
+        SpringApplication.run(MemeApiApplication.class, args);
     }
 }

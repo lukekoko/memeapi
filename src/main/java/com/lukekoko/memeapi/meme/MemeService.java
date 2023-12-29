@@ -1,5 +1,6 @@
 package com.lukekoko.memeapi.meme;
 
+import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -30,11 +31,7 @@ public class MemeService {
 
     private static final Random random = new Random();
 
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-    public String getMemes(String subreddit) {
-        return getPosts(subreddit);
-    }
+    private static final Gson gson = Converters.registerLocalDateTime(new GsonBuilder()).setPrettyPrinting().create();
 
     public String getRandom() {
         List<Meme> memes = memeRepository.findAll();
@@ -44,18 +41,18 @@ public class MemeService {
         return gson.toJson(memes.get(random.nextInt(memes.size())));
     }
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 30 * 1000, fixedDelay = 3 * 60 * 1000)
     private void scheduledPosts() {
         log.info("fetching posts on schedule...");
-        List<String> subreddits = new ArrayList<>(Arrays.asList("dankmemes", "memes"));
+        List<String> subreddits = new ArrayList<>(Arrays.asList("dankmemes", "memes", "okbuddyretard"));
         for (String subreddit : subreddits) {
-            getPosts(subreddit);
+            getPosts(subreddit, "new");
         }
     }
 
-    private String getPosts(String subreddit) {
+    private void getPosts(String subreddit, String listing) {
         log.info("fetching memes from {}", subreddit);
-        String url = "https://oauth.reddit.com/r/" + subreddit + "/hot?limit=25";
+        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=10";
         try {
             String response = redditService.doGetRequest(url);
             log.debug(response);
@@ -69,10 +66,8 @@ public class MemeService {
                 memes.add(meme);
             }
             memeRepository.saveAll(memes);
-            return gson.toJson(memes);
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
-            return gson.toJson("hehe");
         }
     }
 
@@ -86,7 +81,6 @@ public class MemeService {
                 .subreddit(obj.get("subreddit").getAsString())
                 .title(obj.get("title").getAsString())
                 .nsfw(obj.get("over_18").getAsBoolean())
-                .upvotes(obj.get("ups").getAsInt())
                 .spoiler(obj.get("spoiler").getAsBoolean())
                 .build();
     }

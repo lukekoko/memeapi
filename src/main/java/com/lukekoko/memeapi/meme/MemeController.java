@@ -13,12 +13,9 @@ public class MemeController {
 
     private final MemeService memesService;
 
-    @GetMapping(value = "/memes", produces = "application/json")
-    public String getMeme(
-            @RequestParam(name = "subreddit", required = false, defaultValue = "memes")
-                    String subreddit) {
-        log.debug("request for memes");
-        return memesService.getMemes(subreddit);
+    @GetMapping("/")
+    public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return String.format("Hello %s!", name);
     }
 
     @GetMapping(value = "/random", produces = "application/json")

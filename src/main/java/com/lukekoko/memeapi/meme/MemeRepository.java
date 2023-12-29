@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface MemeRepository extends JpaRepository<Meme, String> {
     @Override
-    @CacheEvict(value = "findAll")
+    @CacheEvict(cacheNames = "Memes")
     List<Meme> findAll();
 }

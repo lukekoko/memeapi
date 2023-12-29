@@ -1,21 +1,13 @@
 package com.lukekoko.memeapi.meme;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.google.gson.annotations.SerializedName;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
-import java.util.List;
-
-import com.google.gson.annotations.SerializedName;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -26,7 +18,7 @@ import com.google.gson.annotations.SerializedName;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-// @RedisHash("Meme")
+@RedisHash("Meme")
 public class Meme implements Serializable {
     @Id
     @Column(name = "id", nullable = false)
@@ -47,16 +39,13 @@ public class Meme implements Serializable {
     @SerializedName("author")
     private String author;
 
-    @SerializedName("ups")
-    private Integer upvotes;
-
     @SerializedName("nsfw")
     private Boolean nsfw;
 
     @SerializedName("spoiler")
     private Boolean spoiler;
 
-    @SerializedName("preview")
-    @ElementCollection
-    private List<String> preview;
+    @SerializedName("createdDate")
+    @CreationTimestamp
+    private LocalDateTime createdDate;
 }
