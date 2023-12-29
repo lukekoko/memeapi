@@ -19,19 +19,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class MemeService {
-    private final RedditService redditService;
-
-    private final MemeRepository memeRepository;
-
     private static final Random random = new Random();
-
-    private static final Gson gson = Converters.registerLocalDateTime(new GsonBuilder()).setPrettyPrinting().create();
+    private static final Gson gson =
+            Converters.registerLocalDateTime(new GsonBuilder()).setPrettyPrinting().create();
+    private final RedditService redditService;
+    private final MemeRepository memeRepository;
 
     public String getRandom() {
         List<Meme> memes = memeRepository.findAll();
@@ -41,18 +38,21 @@ public class MemeService {
         return gson.toJson(memes.get(random.nextInt(memes.size())));
     }
 
-    @Scheduled(initialDelay = 30 * 1000, fixedDelay = 3 * 60 * 1000)
+    @Scheduled(initialDelay = 15 * 1000, fixedDelay = 5 * 60 * 1000)
     private void scheduledPosts() {
         log.info("fetching posts on schedule...");
-        List<String> subreddits = new ArrayList<>(Arrays.asList("dankmemes", "memes", "okbuddyretard"));
+        List<String> subreddits =
+                new ArrayList<>(Arrays.asList("dankmemes", "memes", "okbuddyretard", "ProgrammerHumor"));
         for (String subreddit : subreddits) {
             getPosts(subreddit, "new");
+            getPosts(subreddit, "hot");
+            getPosts(subreddit, "controversial");
         }
     }
 
     private void getPosts(String subreddit, String listing) {
-        log.info("fetching memes from {}", subreddit);
-        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=10";
+        log.info("fetching {} memes from {}", listing, subreddit);
+        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=25";
         try {
             String response = redditService.doGetRequest(url);
             log.debug(response);
@@ -63,7 +63,9 @@ public class MemeService {
             for (final JsonElement element : jsonArray) {
                 JsonObject obj = element.getAsJsonObject().getAsJsonObject("data");
                 Meme meme = createMeme(obj);
-                memes.add(meme);
+                if (memeRepository.findById(meme.getId()).isEmpty()) {
+                    memes.add(meme);
+                }
             }
             memeRepository.saveAll(memes);
         } catch (Exception ex) {

@@ -1,8 +1,18 @@
 package com.lukekoko.memeapi.meme;
 
 import com.google.gson.annotations.SerializedName;
-import jakarta.persistence.*;
-import lombok.*;
+
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.redis.core.RedisHash;
 
