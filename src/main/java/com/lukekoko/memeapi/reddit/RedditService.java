@@ -4,15 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lukekoko.memeapi.config.AppConfig;
 import com.lukekoko.memeapi.util.AccessToken;
-import jakarta.annotation.PostConstruct;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
@@ -24,6 +28,7 @@ public class RedditService {
     private Reddit reddit;
 
     public String doGetRequest(String url) {
+        log.info("doing get request to {}", url);
         if (reddit.getAccessToken() == null) {
             fetchCredentials();
         }
@@ -33,6 +38,12 @@ public class RedditService {
                 .headers(headers -> headers.setBearerAuth(reddit.getAccessToken().getToken()))
                 .header("User-agent", reddit.getUserAgent())
                 .retrieve()
+                .onStatus(
+                        HttpStatusCode::is3xxRedirection,
+                        it -> handleError(it.statusCode().toString()))
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        it -> handleError(it.statusCode().toString()))
                 .bodyToMono(String.class)
                 .block();
     }
@@ -69,5 +80,10 @@ public class RedditService {
             log.error("access token sson processing error: ", ex);
             return new AccessToken();
         }
+    }
+
+    private Mono<? extends Throwable> handleError(String message) {
+        log.error(message);
+        return Mono.error(Exception::new);
     }
 }

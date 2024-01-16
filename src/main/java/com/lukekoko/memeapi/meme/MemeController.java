@@ -20,8 +20,10 @@ public class MemeController {
     }
 
     @GetMapping(value = "/random", produces = "application/json")
-    public String getRandom() {
+    public String getRandom(
+            @RequestParam(value = "subreddit", defaultValue = "memes") String subreddit)
+            throws InterruptedException {
         log.debug("request for random");
-        return memesService.getRandom();
+        return memesService.getRandom(subreddit);
     }
 }

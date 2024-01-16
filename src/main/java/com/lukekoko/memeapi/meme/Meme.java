@@ -3,40 +3,31 @@ package com.lukekoko.memeapi.meme;
 import com.google.gson.annotations.SerializedName;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
-@Entity
-@Table(
-        name = "Meme",
-        indexes = {@Index(name = "idx_meme_id", columnList = "id")})
 @Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@RedisHash("Meme")
+@RedisHash(value="Meme", timeToLive = 60L * 120L)
 public class Meme implements Serializable {
     @Id
-    @Column(name = "id", nullable = false)
     private String id;
 
     @SerializedName("postLink")
     private String postLink;
 
+    @Indexed
     @SerializedName("subreddit")
     private String subreddit;
 
@@ -55,7 +46,4 @@ public class Meme implements Serializable {
     @SerializedName("spoiler")
     private Boolean spoiler;
 
-    @SerializedName("createdDate")
-    @CreationTimestamp
-    private LocalDateTime createdDate;
 }

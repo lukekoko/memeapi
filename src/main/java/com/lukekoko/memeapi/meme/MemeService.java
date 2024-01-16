@@ -12,13 +12,14 @@ import com.lukekoko.memeapi.reddit.RedditService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
@@ -27,35 +28,34 @@ public class MemeService {
     private static final Random random = new Random();
     private static final Gson gson =
             Converters.registerLocalDateTime(new GsonBuilder()).setPrettyPrinting().create();
+    private static final ReentrantLock lock = new ReentrantLock();
     private final RedditService redditService;
     private final MemeRepository memeRepository;
 
-    public String getRandom() {
-        List<Meme> memes = memeRepository.findAll();
+    public String getRandom(String subreddit) throws InterruptedException {
+        log.info("getting random meme from {}", subreddit);
+        List<Meme> memes = memeRepository.findAllBySubreddit(subreddit);
+        memes.removeIf(Objects::isNull);
         if (memes.isEmpty()) {
-            return gson.toJson("No memes :(");
-        }
-        return gson.toJson(memes.get(random.nextInt(memes.size())));
-    }
-
-    @Scheduled(initialDelay = 15 * 1000, fixedDelay = 5 * 60 * 1000)
-    private void scheduledPosts() {
-        log.info("fetching posts on schedule...");
-        List<String> subreddits =
-                new ArrayList<>(Arrays.asList("dankmemes", "memes", "okbuddyretard", "ProgrammerHumor"));
-        for (String subreddit : subreddits) {
-            getPosts(subreddit, "new");
             getPosts(subreddit, "hot");
-            getPosts(subreddit, "controversial");
+            memes = memeRepository.findAllBySubreddit(subreddit);
         }
+        return !memes.isEmpty()
+                ? gson.toJson(memes.get(random.nextInt(memes.size())))
+                : "No memes :(";
     }
 
-    private void getPosts(String subreddit, String listing) {
+    private void getPosts(String subreddit, String listing) throws InterruptedException {
+        if (lock.isLocked()) {
+            log.warn("Lock is locked, not fetching data");
+            TimeUnit.SECONDS.sleep(3);
+            return;
+        }
         log.info("fetching {} memes from {}", listing, subreddit);
-        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=25";
+        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=49";
         try {
+            lock.lock();
             String response = redditService.doGetRequest(url);
-            log.debug(response);
             JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
             JsonArray jsonArray = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
 
@@ -70,6 +70,8 @@ public class MemeService {
             memeRepository.saveAll(memes);
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
+        } finally {
+            lock.unlock();
         }
     }
 

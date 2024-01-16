@@ -5,13 +5,6 @@ reddit:
   url: "https://www.reddit.com/api/v1/access_token"
 
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username:
-    password:
-    hikari:
-      connection-timeout: 20000
-      maximum-pool-size: 5
   data:
     redis:
       database: 0
@@ -20,15 +13,6 @@ spring:
       password:
       timeout: 60000
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        default_schema: memeapi
-      jakarta:
-        persistence:
-          create-database-schemas: true
 logging:
   level:
     root: info

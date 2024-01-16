@@ -1,14 +1,12 @@
 package com.lukekoko.memeapi.meme;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+
 @Repository
-public interface MemeRepository extends JpaRepository<Meme, String> {
-    @Override
-    @CacheEvict(cacheNames = "Memes")
-    List<Meme> findAll();
+public interface MemeRepository extends ListCrudRepository<Meme, String> {
+    List<Meme> findAllBySubreddit(String subreddit);
 }
