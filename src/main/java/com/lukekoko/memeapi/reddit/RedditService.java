@@ -40,10 +40,8 @@ public class RedditService {
                 .retrieve()
                 .onStatus(
                         HttpStatusCode::is3xxRedirection,
-                        it -> handleError(it.statusCode().toString()))
-                .onStatus(
-                        HttpStatusCode::is4xxClientError,
-                        it -> handleError(it.statusCode().toString()))
+                        // TODO create custom exception
+                        error -> Mono.error(new RuntimeException("Subreddit doesn't exist")))
                 .bodyToMono(String.class)
                 .block();
     }
@@ -80,10 +78,5 @@ public class RedditService {
             log.error("access token sson processing error: ", ex);
             return new AccessToken();
         }
-    }
-
-    private Mono<? extends Throwable> handleError(String message) {
-        log.error(message);
-        return Mono.error(Exception::new);
     }
 }
