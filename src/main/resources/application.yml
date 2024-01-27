@@ -12,6 +12,9 @@ spring:
       port: 6379
       password:
       timeout: 60000
+  docker:
+    compose:
+      enabled: true
 
 logging:
   level:

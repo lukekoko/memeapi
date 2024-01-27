@@ -43,6 +43,7 @@ public class RedditService {
                         // TODO create custom exception
                         error -> Mono.error(new RuntimeException("Subreddit doesn't exist")))
                 .bodyToMono(String.class)
+                .retry(3)
                 .block();
     }
 
