@@ -1,7 +1,7 @@
 reddit:
   clientId:
   clientSecret:
-  userAgent:
+  userAgent: SpringMemeApi
   url: "https://www.reddit.com/api/v1/access_token"
 
 spring:
@@ -12,3 +12,11 @@ spring:
       port: 6379
       password:
       timeout: 60000
+  docker:
+    compose:
+      enabled: true
+
+logging:
+  level:
+    root: info
+

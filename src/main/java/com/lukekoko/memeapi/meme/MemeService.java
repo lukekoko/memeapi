@@ -1,33 +1,61 @@
 package com.lukekoko.memeapi.meme;
 
-import com.google.gson.*;
+import com.fatboyindustrial.gsonjavatime.Converters;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.lukekoko.memeapi.reddit.RedditService;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class MemeService {
+    private static final Random random = new Random();
+    private static final Gson gson =
+            Converters.registerLocalDateTime(new GsonBuilder()).setPrettyPrinting().create();
+    private static final ReentrantLock lock = new ReentrantLock();
     private final RedditService redditService;
-
     private final MemeRepository memeRepository;
 
-    private static final Random random = new Random();
+    public String getRandom(String subreddit) throws InterruptedException {
+        log.info("getting random meme from {}", subreddit);
+        List<Meme> memes = memeRepository.findAllBySubreddit(subreddit);
+        memes.removeIf(Objects::isNull);
+        if (memes.isEmpty()) {
+            getPosts(subreddit, "hot");
+            memes = memeRepository.findAllBySubreddit(subreddit);
+        }
+        return !memes.isEmpty()
+                ? gson.toJson(memes.get(random.nextInt(memes.size())))
+                : "No memes :(";
+    }
 
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-
-    public String getPost(String subreddit) {
-        String url = "https://oauth.reddit.com/r/" + subreddit + "/hot?limit=20";
+    private void getPosts(String subreddit, String listing) throws InterruptedException {
+        if (lock.isLocked()) {
+            log.warn("Lock is locked, not fetching data");
+            TimeUnit.SECONDS.sleep(3);
+            return;
+        }
+        log.info("fetching {} memes from {}", listing, subreddit);
+        String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=49";
         try {
+            lock.lock();
             String response = redditService.doGetRequest(url);
-            log.debug(response);
             JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
             JsonArray jsonArray = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
 
@@ -35,21 +63,18 @@ public class MemeService {
             for (final JsonElement element : jsonArray) {
                 JsonObject obj = element.getAsJsonObject().getAsJsonObject("data");
                 Meme meme = createMeme(obj);
-                memes.add(meme);
+                if (memeRepository.findById(meme.getId()).isEmpty()) {
+                    memes.add(meme);
+                }
             }
             memeRepository.saveAll(memes);
-            return gson.toJson(memes);
+        } catch (RuntimeException ex) {
+            log.error(ex.getMessage());
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
-            return gson.toJson("hehe");
+        } finally {
+            lock.unlock();
         }
-    }
-
-    public String getRandom() {
-        List<Meme> memes = new ArrayList<>();
-        memeRepository.findAll().forEach(memes::add);
-
-        return gson.toJson(memes.get(random.nextInt(memes.size())));
     }
 
     private Meme createMeme(JsonObject obj) {
@@ -62,7 +87,6 @@ public class MemeService {
                 .subreddit(obj.get("subreddit").getAsString())
                 .title(obj.get("title").getAsString())
                 .nsfw(obj.get("over_18").getAsBoolean())
-                .upvotes(obj.get("ups").getAsInt())
                 .spoiler(obj.get("spoiler").getAsBoolean())
                 .build();
     }

@@ -1,31 +1,33 @@
 package com.lukekoko.memeapi.meme;
 
+import com.google.gson.annotations.SerializedName;
+
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
 import java.io.Serializable;
-import java.util.List;
 
-import com.google.gson.annotations.SerializedName;
-import org.springframework.data.redis.core.RedisHash;
-
-@Data
 @Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@RedisHash("Meme")
+@RedisHash(value="Meme", timeToLive = 60L * 120L)
 public class Meme implements Serializable {
+    @Id
     private String id;
 
     @SerializedName("postLink")
     private String postLink;
 
+    @Indexed
     @SerializedName("subreddit")
     private String subreddit;
 
@@ -38,15 +40,10 @@ public class Meme implements Serializable {
     @SerializedName("author")
     private String author;
 
-    @SerializedName("ups")
-    private Integer upvotes;
-
     @SerializedName("nsfw")
     private Boolean nsfw;
 
     @SerializedName("spoiler")
     private Boolean spoiler;
 
-    @SerializedName("preview")
-    private List<String> preview;
 }
