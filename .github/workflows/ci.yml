@@ -51,9 +51,10 @@ jobs:
       - name: Set VERSION environment variable
         run: |
           echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          echo ${{ env.VERSION }}
 
       - name: Docker Build-Tag-Push my-app
         run: |
           ./mvnw spring-boot:build-image
-          docker tag memeapi:${{ env.VERSION }} ${{ secrets.DOCKERHUB_USERNAME }}/memeapi:latest
+          docker tag memeapi:0.0.1-SNAPSHOT ${{ secrets.DOCKERHUB_USERNAME }}/memeapi:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/memeapi:latest
