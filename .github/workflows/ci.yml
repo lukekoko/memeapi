@@ -1,8 +1,9 @@
 name: CI
 
 on:
-  release:
-    types: [ created ]
+  push:
+    branches:
+      - "deploy"
 
 env:
   REGISTRY: ghcr.io
@@ -26,10 +27,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Make Maven Wrapper executable
-        if: contains(matrix.os, 'win') == false
-        run: chmod +x ./mvnw
-
       - name: Build image
         run: ./mvnw clean install
 
@@ -37,18 +34,13 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        uses: docker/login-action@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set VERSION environment variable
-        run: |
-          echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-          echo ${{ env.VERSION }}
-
       - name: Docker Build-Tag-Push my-app
         run: |
           ./mvnw spring-boot:build-image
-          docker push memeapi:0.0.1-SNAPSHOT
+          docker push ${{env.REGISTRY}}/lukekoko/memeapi:latest docker push memeapi:latest
