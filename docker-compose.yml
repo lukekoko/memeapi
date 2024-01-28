@@ -1,14 +1,29 @@
 version: '3.8'
 services:
+  app:
+    image : ghcr.io/lukekoko/memeapi:latest
+    ports:
+      - 8080:8080
+    depends_on:
+      - redis
+    networks:
+      - memeapi
+
   redis:
     image: redis:latest
     command: redis-server
     volumes:
       - redis:/var/lib/redis
       - redis-config:/usr/local/etc/redis/redis.conf
+    hostname: redis
     ports:
       - 6379:6379
+    networks:
+      - memeapi
 
 volumes:
   redis:
   redis-config:
+
+networks:
+  memeapi:
