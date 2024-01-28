@@ -20,7 +20,7 @@
 		<repository>
 			<id>github</id>
 			<name>GitHub Packages</name>
-			<url>https://github.com/lukekoko/memeapi/</url>
+			<url>https://maven.pkg.github.com/lukekoko/memeapi/</url>
 		</repository>
 	</distributionManagement>
 	<dependencies>
