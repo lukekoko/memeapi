@@ -43,5 +43,5 @@ jobs:
       - name: Docker Build-Tag-Push my-app
         run: |
           ./mvnw spring-boot:build-image
-          docker tag memeapi:0.0.1-SNAPSHOT memeapi:latest
+          docker tag memeapi:0.0.1-SNAPSHOT ghcr.io/lukekoko/memeapi:latest
           docker push ${{env.REGISTRY}}/lukekoko/memeapi:latest
