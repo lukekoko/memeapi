@@ -55,7 +55,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            git clone https://github.com/lukekoko/memeapi.git
-            cd ~/memeapi
-            git pull
+            if cd memeapi; then git pull; else git clone https://github.com/lukekoko/memeapi.git memeapi; fi
             ./deploy.sh
