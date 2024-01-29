@@ -3,14 +3,16 @@ name: CI
 on:
   push:
     branches:
-      - "release"
+      - main
+      - release
+      - develop
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-deploy:
+  build-and-push-image:
     runs-on: ubuntu-latest
 
     permissions:
@@ -44,18 +46,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm64/v8
-
-      - name: executing remote ssh commands
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          REDDIT_CLIENTID: ${{ secrets.REDDIT_CLIENTID }}
-          REDDIT_CLIENTSECRET: ${{ secrets.REDDIT_CLIENTSECRET}}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          envs: REDDIT_CLIENTID,REDDIT_CLIENTSECRET
-          script: |
-            if cd memeapi; then git pull; else git clone https://github.com/lukekoko/memeapi.git memeapi; fi
-            bash ./deploy.sh
