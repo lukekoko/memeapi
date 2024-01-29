@@ -62,20 +62,28 @@ public class MemeService {
             List<Meme> memes = new ArrayList<>();
             for (final JsonElement element : jsonArray) {
                 JsonObject obj = element.getAsJsonObject().getAsJsonObject("data");
-                try {
-                    Meme meme = createMeme(obj);
-                    if (memeRepository.findById(meme.getId()).isEmpty()) {
-                        memes.add(meme);
-                    }
-                } catch (NullPointerException ex) {
-                    log.info("error with this post: {}", element);
-                }
+                addMeme(memes, obj);
             }
             memeRepository.saveAll(memes);
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void addMeme(List<Meme> memes, JsonObject obj) {
+        String memeUrl = obj.get("url").getAsString();
+        if (!memeUrl.endsWith(".jpg") || !memeUrl.endsWith(".png") || !memeUrl.endsWith(".gif")) {
+            return;
+        }
+        try {
+            Meme meme = createMeme(obj);
+            if (memeRepository.findById(meme.getId()).isEmpty()) {
+                memes.add(meme);
+            }
+        } catch (NullPointerException ex) {
+            log.info("error with this post: {}", obj);
         }
     }
 
