@@ -53,6 +53,7 @@ public class RedditService {
     }
 
     private AccessToken getAccessToken() {
+        log.info("getting new reddit access token");
         try {
             final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("grant_type", "client_credentials");
