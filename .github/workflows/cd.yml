@@ -1,10 +1,9 @@
-name : CD
+name: CD
 
 on:
-  push:
   workflow_run:
-    workflows: ["CI"]
-    branches: [release]
+    workflows: [ CI ]
+    branches: [ release ]
     types:
       - completed
 
@@ -13,21 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: executing remote ssh commands
-      uses: appleboy/ssh-action@v1.0.3
-      env:
-        REDDIT_CLIENTID: ${{ secrets.REDDIT_CLIENTID }}
-        REDDIT_CLIENTSECRET: ${{ secrets.REDDIT_CLIENTSECRET}}
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SSH_PORT }}
-        envs: REDDIT_CLIENTID,REDDIT_CLIENTSECRET
-        script: |
-          if [ -d "memeapi" ]; then
-            git clone https://github.com/lukekoko/memeapi.git
-          fi
-          cd memeapi
-          git pull
-          bash ./deploy.sh
+      - name: executing remote ssh commands
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          REDDIT_CLIENTID: ${{ secrets.REDDIT_CLIENTID }}
+          REDDIT_CLIENTSECRET: ${{ secrets.REDDIT_CLIENTSECRET}}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: REDDIT_CLIENTID,REDDIT_CLIENTSECRET
+          script: |
+            if [ -d "memeapi" ]; then
+              git clone https://github.com/lukekoko/memeapi.git
+            fi
+            cd memeapi
+            git pull
+            bash ./deploy.sh

@@ -1,6 +1,11 @@
 name: CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - release
+      - develop
 
 env:
   REGISTRY: ghcr.io
