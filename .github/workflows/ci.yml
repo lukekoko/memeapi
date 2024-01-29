@@ -42,4 +42,17 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          no-cache: true
+
+      - name: executing remote ssh commands
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          REDDIT_CLIENTID: ${{ secrets.REDDIT_CLIENTID }}
+          REDDIT_CLIENTSECRET: ${{ secrets.REDDIT_CLIENTSECRET}}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            if cd memeapi; then git pull; else git clone https://github.com/lukekoko/memeapi.git memeapi; fi
+            ./deploy.sh
