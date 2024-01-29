@@ -56,6 +56,7 @@ public class MemeService {
         try {
             lock.lock();
             String response = redditService.doGetRequest(url);
+            log.info(response);
             JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
             JsonArray jsonArray = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
 
