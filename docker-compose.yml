@@ -2,16 +2,13 @@ version: '3.8'
 
 services:
   app:
-    image : ghcr.io/lukekoko/memeapi:latest
+    image : ghcr.io/lukekoko/memeapi:release
     ports:
       - 8080:8080
     depends_on:
       - redis
     networks:
-      - memeapi
-    environment:
-      - JAVA_OPTS=-Xmx512M -Xms256M -XX:MaxDirectMemorySize=512M
-      - JAVA_TOOL_OPTIONS=-Xss256K -XX:ReservedCodeCacheSize=64M -XX:MaxMetaspaceSize=64 -Xmx64M
+      - app
 
   redis:
     image: redis:latest
@@ -23,11 +20,11 @@ services:
     ports:
       - 6379:6379
     networks:
-      - memeapi
+      - app
 
 volumes:
   redis:
   redis-config:
 
 networks:
-  memeapi:
+  app:
