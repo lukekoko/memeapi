@@ -72,8 +72,6 @@ public class MemeService {
                 }
             }
             memeRepository.saveAll(memes);
-        } catch (RuntimeException ex) {
-            log.error(ex.getMessage());
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
         } finally {
