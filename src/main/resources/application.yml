@@ -14,6 +14,8 @@ spring:
   docker:
     compose:
       enabled: true
+      file: docker-compose-dev.yml
+
 
 logging:
   level:
