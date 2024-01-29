@@ -9,6 +9,9 @@ services:
       - redis
     networks:
       - app
+    environment:
+      REDDIT_CLIENTID: ${REDDIT_CLIENTID}
+      REDDIT_CLIENTSECRET: ${REDDIT_CLIENTSECRET}
 
   redis:
     image: redis:latest
