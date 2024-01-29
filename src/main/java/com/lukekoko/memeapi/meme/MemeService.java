@@ -74,7 +74,10 @@ public class MemeService {
 
     private void addMeme(List<Meme> memes, JsonObject obj) {
         String memeUrl = obj.get("url").getAsString();
-        if (!memeUrl.endsWith(".jpg") || !memeUrl.endsWith(".png") || !memeUrl.endsWith(".gif")) {
+        if (!memeUrl.endsWith(".jpg")
+                && !memeUrl.endsWith(".png")
+                && !memeUrl.endsWith(".gif")
+                && !memeUrl.endsWith(".jpeg")) {
             return;
         }
         try {
