@@ -56,16 +56,19 @@ public class MemeService {
         try {
             lock.lock();
             String response = redditService.doGetRequest(url);
-            log.info(response);
             JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
             JsonArray jsonArray = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
 
             List<Meme> memes = new ArrayList<>();
             for (final JsonElement element : jsonArray) {
                 JsonObject obj = element.getAsJsonObject().getAsJsonObject("data");
-                Meme meme = createMeme(obj);
-                if (memeRepository.findById(meme.getId()).isEmpty()) {
-                    memes.add(meme);
+                try {
+                    Meme meme = createMeme(obj);
+                    if (memeRepository.findById(meme.getId()).isEmpty()) {
+                        memes.add(meme);
+                    }
+                } catch (NullPointerException ex) {
+                    log.info("error with this post: {}", element);
                 }
             }
             memeRepository.saveAll(memes);
