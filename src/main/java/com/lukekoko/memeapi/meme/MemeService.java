@@ -85,7 +85,7 @@ public class MemeService {
                 .id(obj.get("id").getAsString())
                 .author(obj.get("author").getAsString())
                 .postLink("https://redd.it/" + obj.get("id").getAsString())
-                .url(obj.get("url_overridden_by_dest").getAsString())
+                .url(obj.get("url").getAsString())
                 .subreddit(obj.get("subreddit").getAsString())
                 .title(obj.get("title").getAsString())
                 .nsfw(obj.get("over_18").getAsBoolean())
