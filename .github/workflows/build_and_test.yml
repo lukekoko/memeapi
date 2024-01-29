@@ -8,11 +8,7 @@
 
 name: Java CI with Maven
 
-on:
-  push:
-    branches: [ "main", "release" ]
-  pull_request:
-    branches: [ "main", "release" ]
+on: [push]
 
 jobs:
   build:
@@ -28,4 +24,4 @@ jobs:
         distribution: 'corretto'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B package --file pom.xml -ntp
