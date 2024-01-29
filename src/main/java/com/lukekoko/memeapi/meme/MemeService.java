@@ -34,11 +34,11 @@ public class MemeService {
 
     public String getRandom(String subreddit) throws InterruptedException {
         log.info("getting random meme from {}", subreddit);
-        List<Meme> memes = memeRepository.findAllBySubreddit(subreddit);
+        List<Meme> memes = memeRepository.findAllBySubreddit(subreddit.toLowerCase());
         memes.removeIf(Objects::isNull);
         if (memes.isEmpty()) {
             getPosts(subreddit, "hot");
-            memes = memeRepository.findAllBySubreddit(subreddit);
+            memes = memeRepository.findAllBySubreddit(subreddit.toLowerCase());
         }
         return !memes.isEmpty()
                 ? gson.toJson(memes.get(random.nextInt(memes.size())))
@@ -97,7 +97,7 @@ public class MemeService {
                 .author(obj.get("author").getAsString())
                 .postLink("https://redd.it/" + obj.get("id").getAsString())
                 .url(obj.get("url").getAsString())
-                .subreddit(obj.get("subreddit").getAsString())
+                .subreddit(obj.get("subreddit").getAsString().toLowerCase())
                 .title(obj.get("title").getAsString())
                 .nsfw(obj.get("over_18").getAsBoolean())
                 .spoiler(obj.get("spoiler").getAsBoolean())
