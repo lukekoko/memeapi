@@ -28,7 +28,9 @@ public class AppConfig {
 
     @Bean
     public WebClient webClient(WebClient.Builder webClientBuilder) {
-        return webClientBuilder.build();
+        return webClientBuilder
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
+                .build();
     }
 
     @Bean
