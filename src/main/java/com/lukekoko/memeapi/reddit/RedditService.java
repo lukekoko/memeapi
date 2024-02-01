@@ -42,6 +42,12 @@ public class RedditService {
                         HttpStatusCode::is3xxRedirection,
                         // TODO create custom exception
                         error -> Mono.error(new RuntimeException("Subreddit doesn't exist")))
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        error -> {
+                            fetchCredentials();
+                            return Mono.error(new RuntimeException("Invalid access token"));
+                        })
                 .bodyToMono(String.class)
                 .retry(3)
                 .block();
@@ -58,9 +64,9 @@ public class RedditService {
             final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("grant_type", "client_credentials");
 
-            WebClient client = WebClient.create();
             String response =
-                    client.post()
+                    webClient
+                            .post()
                             .uri(appConfig.getUrl())
                             .headers(
                                     headers ->
