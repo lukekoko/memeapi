@@ -55,16 +55,30 @@ public class MemeService {
         String url = "https://oauth.reddit.com/r/" + subreddit + "/" + listing + "?limit=49";
         try {
             lock.lock();
-            String response = redditService.doGetRequest(url);
-            JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
-            JsonArray jsonArray = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
+            redditService
+                    .doGetRequest(url)
+                    .thenApply(
+                            response -> {
+                                JsonObject jsonObject =
+                                        JsonParser.parseString(response).getAsJsonObject();
+                                JsonArray jsonArray =
+                                        jsonObject
+                                                .getAsJsonObject("data")
+                                                .getAsJsonArray("children");
 
-            List<Meme> memes = new ArrayList<>();
-            for (final JsonElement element : jsonArray) {
-                JsonObject obj = element.getAsJsonObject().getAsJsonObject("data");
-                addMeme(memes, obj);
-            }
-            memeRepository.saveAll(memes);
+                                List<Meme> memes = new ArrayList<>();
+                                for (final JsonElement element : jsonArray) {
+                                    JsonObject obj =
+                                            element.getAsJsonObject().getAsJsonObject("data");
+                                    addMeme(memes, obj);
+                                }
+                                memeRepository.saveAll(memes);
+                                return memes;
+                            })
+                    .get();
+        } catch (InterruptedException ex) {
+            log.error("thread interrupted");
+            Thread.currentThread().interrupt();
         } catch (Exception ex) {
             log.error("Error occurred: ", ex);
         } finally {

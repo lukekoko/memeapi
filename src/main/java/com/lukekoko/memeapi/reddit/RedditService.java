@@ -8,7 +8,7 @@ import com.lukekoko.memeapi.util.AccessToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -17,6 +17,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import reactor.core.publisher.Mono;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -27,9 +30,10 @@ public class RedditService {
 
     private Reddit reddit;
 
-    public String doGetRequest(String url) {
+    public CompletableFuture<String> doGetRequest(String url) {
         log.info("doing get request to {}", url);
         if (reddit.getAccessToken() == null) {
+            log.info("reddit access token is null, getting new access token");
             fetchCredentials();
         }
         return webClient
@@ -37,54 +41,63 @@ public class RedditService {
                 .uri(url)
                 .headers(headers -> headers.setBearerAuth(reddit.getAccessToken().getToken()))
                 .header("User-agent", reddit.getUserAgent())
-                .retrieve()
-                .onStatus(
-                        HttpStatusCode::is3xxRedirection,
-                        // TODO create custom exception
-                        error -> Mono.error(new RuntimeException("Subreddit doesn't exist")))
-                .onStatus(
-                        HttpStatusCode::is4xxClientError,
-                        error -> {
-                            fetchCredentials();
-                            return Mono.error(new RuntimeException("Invalid access token"));
+                .exchangeToMono(
+                        response -> {
+                            if (response.statusCode().equals(HttpStatus.OK)) {
+                                return response.bodyToMono(String.class);
+                            } else if (response.statusCode().equals(HttpStatus.UNAUTHORIZED)) {
+                                log.warn("reddit request failed, getting new access token");
+                                fetchCredentials();
+                                return response.createException().flatMap(Mono::error);
+                            } else {
+                                log.error("reddit request failed: {}", response.statusCode());
+                                return Mono.just(response.statusCode() + " " + url);
+                            }
                         })
-                .bodyToMono(String.class)
-                .retry(3)
-                .block();
+                .retry()
+                .toFuture();
     }
 
     private void fetchCredentials() {
-        AccessToken accessToken = getAccessToken();
-        reddit.setAccessToken(accessToken);
+        try {
+            AccessToken accessToken =
+                    getAccessToken()
+                            .thenApply(
+                                    response -> {
+                                        log.debug(response);
+                                        ObjectMapper objectMapper = new ObjectMapper();
+                                        try {
+                                            return objectMapper.readValue(
+                                                    response, AccessToken.class);
+                                        } catch (JsonProcessingException ex) {
+                                            log.error("access token json processing error: ", ex);
+                                            return new AccessToken();
+                                        }
+                                    })
+                            .get();
+            reddit.setAccessToken(accessToken);
+        } catch (InterruptedException | ExecutionException ex) {
+            log.error("access token future error: ", ex);
+            Thread.currentThread().interrupt();
+        }
     }
 
-    private AccessToken getAccessToken() {
+    private CompletableFuture<String> getAccessToken() {
         log.info("getting new reddit access token");
-        try {
-            final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("grant_type", "client_credentials");
-
-            String response =
-                    webClient
-                            .post()
-                            .uri(appConfig.getUrl())
-                            .headers(
-                                    headers ->
-                                            headers.setBasicAuth(
-                                                    appConfig.getClientId(),
-                                                    appConfig.getClientSecret()))
-                            .header("User-Agent", appConfig.getUserAgent())
-                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                            .body(BodyInserters.fromValue(formData))
-                            .retrieve()
-                            .bodyToMono(String.class)
-                            .block();
-            log.debug(response);
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(response, AccessToken.class);
-        } catch (JsonProcessingException ex) {
-            log.error("access token sson processing error: ", ex);
-            return new AccessToken();
-        }
+        final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "client_credentials");
+        return webClient
+                .post()
+                .uri(appConfig.getUrl())
+                .headers(
+                        headers ->
+                                headers.setBasicAuth(
+                                        appConfig.getClientId(), appConfig.getClientSecret()))
+                .header("User-Agent", appConfig.getUserAgent())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromValue(formData))
+                .retrieve()
+                .bodyToMono(String.class)
+                .toFuture();
     }
 }
