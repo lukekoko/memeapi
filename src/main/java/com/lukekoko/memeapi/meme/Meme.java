@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@RedisHash(value="Meme", timeToLive = 60L * 120L)
+@RedisHash(value="Meme", timeToLive = 60L * 10L)
 public class Meme implements Serializable {
     @Id
     private String id;
